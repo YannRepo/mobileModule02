@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { View } from 'react-native';
-import { useState } from 'react';
+import { View,Text } from 'react-native';
+import { useState, useContext, createContext } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -9,19 +9,19 @@ import ResearchLocationArea from './component/ResearchLocationArea';
 import MySearchBar from './component/MySearchBar';
 import MyTabView from './component/MyTabView';
 
-
+import { WeatherProvider } from './context/WeatherContext';
 
 import { locationData } from './types'; 
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <TabViewExample />
-    </SafeAreaProvider>
+    <WeatherProvider>
+      <SafeAreaProvider>
+        <TabViewExample />
+      </SafeAreaProvider>
+    </WeatherProvider>
   );
 }
-
-
 
 
 export function TabViewExample() {
@@ -35,15 +35,14 @@ export function TabViewExample() {
 
 
 
+
   return (
-    <View style={{ flex: 1, flexDirection: 'column', paddingTop: insets.top, paddingBottom: insets.bottom }}>
-      <StatusBar style='auto' />
-      <ResearchLocationArea
-      setSearchQuery={setSearchQuery}
-      setLocation={setLocation}
-      />
-      <MyTabView location={location} />
-    </View>
+    
+      <View style={{ flex: 1, flexDirection: 'column', paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        <StatusBar style='auto' />
+        <ResearchLocationArea />
+        <MyTabView />
+      </View>
   );
 }
 

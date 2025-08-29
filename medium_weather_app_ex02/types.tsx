@@ -12,3 +12,9 @@ export type locationData = {
   longitude: number;
   weather?: WeatherData | null;
 };
+
+export type WeatherData = {
+  city: string;
+  temperature: number;
+};
+

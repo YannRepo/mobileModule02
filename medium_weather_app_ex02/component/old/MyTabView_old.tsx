@@ -1,16 +1,14 @@
 import * as React from 'react';
 import { View, useWindowDimensions, Text, StyleSheet } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { useState, useContext, createContext, ReactNode } from 'react';
 
 import { Icon } from 'react-native-elements';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 import { locationData } from '../types';
-import CurrentlyRoute from './CurrentlyRoute';
+import CurrentlyRoute from './CurrentlyTab';
 import TodayRoute from './TodayTab';
 
-import { WeatherContext } from '../context/WeatherContext';
 
 const WeeklyRoute = ({ position }: { position: string }) => (
     <View style={styles.tabBackground}>
@@ -36,10 +34,9 @@ const routes = [
     { key: 'weekly', title: 'Weekly' },
 ];
 
-export default function MyTabView() {
+export default function MyTabView({ location }: { location: locationData }) {
     const layout = useWindowDimensions();
     const [index, setIndex] = React.useState(0);
-    const { data, setData, fetchWeather } = useContext(WeatherContext);
 
     const renderTabBar = props => (
         <TabBar
@@ -53,6 +50,13 @@ export default function MyTabView() {
         color: focused ? '#5B5D72' : '#aeaeb7ff',
     });
 
+    if (!location) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={styles.tabText}>Loading...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={{ flex: 1 }}>
@@ -61,13 +65,11 @@ export default function MyTabView() {
                 renderScene={({ route }) => {
                     switch (route.key) {
                         case 'currently':
-                            return <CurrentlyRoute  />;
+                            return <CurrentlyRoute location={location} />;
                         case 'today':
-                            // return <TodayRoute />;
-                            return <Text>a faire</Text>;
+                            return <TodayRoute location={location} />;
                         case 'weekly':
-                            // return <WeeklyRoute />;
-                            return <Text>a faire</Text>;
+                            return <WeeklyRoute position={location?.city ?? 'rien'} />;
                         default:
                             return null;
                     }

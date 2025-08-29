@@ -1,0 +1,130 @@
+import * as React from 'react';
+import { View, Text } from 'react-native';
+import { useState, useContext, createContext, ReactNode } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { fetchWeatherApi } from 'openmeteo';
+
+
+export interface WeatherData {
+    location: { city: string; region: string; country: string };
+    current: { temperature: number; desc: string; wind: number };
+    //hourly: Array<{ time: Date; temp: number; desc: string; wind: number }>;
+    //daily: Array<{ date: Date; min: number; max: number; desc: string }>;
+    error: string | null;
+}
+
+// const WeatherDataContext = createContext(null);
+
+// const [weatherData, setWeatherData] = useState({ city: "null", temperature: -100 });
+
+
+export const WeatherContext = createContext<{
+    data: WeatherData;
+    setData: React.Dispatch<React.SetStateAction<WeatherData>>;
+    fetchWeather: (lat: number, lon: number) => Promise<void>;
+} | undefined>(undefined);
+
+
+export const WeatherProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [data, setData] = useState<WeatherData>({
+        location: { city: '', region: '', country: '' },
+        current: { temperature: 0, desc: '', wind: 0 },
+        // hourly: [],
+        // daily: [],
+        error: null,
+    });
+
+    const getLocation = async (lat: number, lon: number) => {
+        try {
+            const APIGeocodeAnswer = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}`);
+            const cityData = await APIGeocodeAnswer.json();
+            console.log('[WeatherContext] cityData:', cityData);
+            return {
+                city: cityData.city || cityData.locality || 'Unknown',
+                region: cityData.principalSubdivision || 'Unknown',
+                country: cityData.countryName || 'Unknown'
+            };
+        } catch {
+            return { city: 'Unknown', region: 'Unknown', country: 'Unknown' };
+        }
+    };
+
+    const getMeteoDescription = (code: number) => {
+        const tableCodes: Record<number, string> = {
+            0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+            45: 'Fog', 51: 'Light Drizzle', 53: 'Drizzle', 55: 'Heavy Drizzle',
+            61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain', 71: 'Light Snow',
+            73: 'Snow', 75: 'Heavy Snow', 80: 'Showers', 81: 'Moderate Showers',
+            82: 'Heavy Showers', 95: 'Thunderstorm'
+        };
+        return tableCodes[code] || 'Unknown';
+    };
+    // faire fetchWeather avec ville et l'appeler dans celui avec lat / lon
+
+    const fetchWeather = async (lat: number, lon: number) => {
+        try {
+            const [responses, location] = await Promise.all([
+                fetchWeatherApi("https://api.open-meteo.com/v1/forecast", {
+                    latitude: lat,
+                    longitude: lon,
+                    current: ['temperature_2m', 'weather_code', 'wind_speed_10m'],
+                    hourly: ['temperature_2m', 'weather_code', 'wind_speed_10m'],
+                    daily: ['temperature_2m_max', 'temperature_2m_min', 'weather_code'],
+                    timezone: 'auto',
+                    forecast_days: 7
+                }),
+                getLocation(lat, lon)
+            ]);
+
+            const response = responses[0];
+            //const offset = response.utcOffsetSeconds();
+
+            // Current
+            const curr = response.current()!;
+            const current = {
+                temperature: Math.round(curr.variables(0)!.value()),
+                desc: getMeteoDescription(curr.variables(1)!.value()),
+                wind: Math.round(curr.variables(2)!.value())
+            };
+
+            // Hourly (24h)
+            // const h = response.hourly()!;
+            // const hourly = Array.from({ length: 24 }, (_, i) => ({
+            //   time: new Date((Number(h.time()) + i * h.interval() + offset) * 1000),
+            //   temperature: Math.round(h.variables(0)!.valuesArray()![i]),
+            //   desc: getDesc(h.variables(1)!.valuesArray()![i]),
+            //   wind: Math.round(h.variables(2)!.valuesArray()![i])
+            // }));
+
+
+            // Daily
+            // const d = response.daily()!;
+            // const dailyCount = (Number(d.timeEnd()) - Number(d.time())) / d.interval();
+            // const daily = Array.from({ length: dailyCount }, (_, i) => ({
+            //   date: new Date((Number(d.time()) + i * d.interval() + offset) * 1000),
+            //   max: Math.round(d.variables(0)!.valuesArray()![i]),
+            //   min: Math.round(d.variables(1)!.valuesArray()![i]),
+            //   desc: getDesc(d.variables(2)!.valuesArray()![i])
+            // }));
+
+            // const newData = { location, current, hourly, daily, loading: false, error: null };
+            const newData = { location, current, error: null };
+            console.log('[WeatherContext] newData:', newData);
+
+            setData(newData);
+
+        } catch (error) {
+            setData(prev => ({ ...prev, loading: false, error: 'Failed to fetch weather' }));
+        }
+    };
+
+
+
+    return (
+        <WeatherContext.Provider value={{ data, setData, fetchWeather }}>
+            {children}
+        </WeatherContext.Provider>
+    );
+};

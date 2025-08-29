@@ -1,94 +1,50 @@
 import { TextInput, View, StyleSheet } from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 
 import { Icon } from 'react-native-elements';
 import * as Location from 'expo-location';
 
-import { locationData } from '../types'; 
+import { locationData } from '../types';
 
-export default function LocationButton({
-    setSearchQuery,
-    setLocation,
-}: {
-    setSearchQuery: (query: string) => void;
-    setLocation: (location: locationData) => void;
-}) {
+import { WeatherContext } from '../context/WeatherContext';
+
+
+export default function LocationButton() {
 
     // Juste au demarrage
     useEffect(() => {
         handleGeolocation();
     }, []);
 
-    const handleGeolocation = () => {
-        getGPSPosition();
-    };
+    const weatherContext = useContext(WeatherContext);
 
-    const getGPSPosition = async () => {
+    if (!weatherContext) {
+        throw new Error("WeatherContext not found");
+    }
 
-        let { status } = await Location.requestForegroundPermissionsAsync();
+    const { data, setData, fetchWeather } = weatherContext;
+
+    const handleGeolocation = async () => {
+        console.log("[LocationButton] Getting GPS position...");
+        const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-            setLocation({
-                city: 'errorLocation',
-                region: 'errorLocation',
-                country: 'errorLocation',
-                latitude: 0,
-                longitude: 0,
-            });
+            console.log("[LocationButton] Error: 'Permission to access location is denied.");
+            setData((prevData: any) => ({
+                ...prevData,
+                error: 'Permission to access location is denied, please enable it in your App settings.',
+            }));
             return;
         }
-        let loc = await Location.getCurrentPositionAsync({}); // Etape lente sur expo telephone
-        const coordsString = `${loc.coords.latitude},${loc.coords.longitude}`;
-        //setPosition(coordsString); // coords contains latitude, longitude, altitude, etc.
-        let city = await getLocationFromCoord(loc.coords);
-        setLocation({
-            city: city.city,
-            region: city.region,
-            country: city.country,
-            latitude: city.latitude,
-            longitude: city.longitude,
-        });
-        console.log("Location set too:", city);
+        console.log("[LocationButton] location access granted");
+        let loc = await Location.getCurrentPositionAsync({});
+        fetchWeather(loc.coords.latitude, loc.coords.longitude);
+
+
+
     };
 
-    const getLocationFromCoord = async (
-        coords: Location.LocationObjectCoords
-    ): Promise<locationData> => {
-        try {
-            const results = await Location.reverseGeocodeAsync({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
 
-            });
-
-            if (results.length > 0) {
-                const place = results[0];
-                return {
-                    city: place.city ?? place.subregion ?? 'errorLocation',
-                    region: place.region ?? 'errorLocation',
-                    country: place.country ?? 'errorLocation',
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                };
-            }
-            return {
-                city: 'errorLocation',
-                region: 'errorLocation',
-                country: 'errorLocation',
-                latitude: 0,
-                longitude: 0,
-            };
-        } catch (error) {
-            console.error("Error while reverse geocoding:", error);
-            return {
-                city: 'errorLocation',
-                region: 'errorLocation',
-                country: 'errorLocation',
-                latitude: 0,
-                longitude: 0,
-            };
-        }
-    };
 
     return (
         <Icon

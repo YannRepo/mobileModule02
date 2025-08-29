@@ -10,7 +10,13 @@ import LocationButton from './LocationButton';
 import { locationData } from '../types';
 
 
-export default function MySearchBar() {
+export default function MySearchBar({
+  setSearchQuery,
+  setLocation,
+}: {
+  setSearchQuery: (query: string) => void;
+  setLocation: (location: locationData) => void;
+}) {
 
   type CityResult = {
     id: number;
@@ -76,7 +82,7 @@ export default function MySearchBar() {
     console.log("location", location);
 
     if (location) {
-      // setLocation(location);
+      setLocation(location);
     }
   };
 
@@ -108,13 +114,13 @@ export default function MySearchBar() {
               onPress={() => {
                 setSearchText(item.name);
                 //setPosition(item.name);
-                // setLocation({
-                //   city: item.name,
-                //   region: item.admin1,
-                //   country: item.country,
-                //   latitude: item.latitude,
-                //   longitude: item.longitude,
-                // });
+                setLocation({
+                  city: item.name,
+                  region: item.admin1,
+                  country: item.country,
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                });
                 setResults([]);
 
               }}
