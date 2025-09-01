@@ -7,7 +7,8 @@ import { Icon } from 'react-native-elements';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 import { locationData } from '../types';
-import CurrentlyRoute from './CurrentlyRoute';
+import RouteCurrently from './RouteCurrently';
+import RouteToday from './RouteToday';
 import TodayRoute from './TodayTab';
 
 import { WeatherContext } from '../context/WeatherContext';
@@ -61,10 +62,9 @@ export default function MyTabView() {
                 renderScene={({ route }) => {
                     switch (route.key) {
                         case 'currently':
-                            return <CurrentlyRoute  />;
+                            return <RouteCurrently />;
                         case 'today':
-                            // return <TodayRoute />;
-                            return <Text>a faire</Text>;
+                            return <RouteToday />;
                         case 'weekly':
                             // return <WeeklyRoute />;
                             return <Text>a faire</Text>;

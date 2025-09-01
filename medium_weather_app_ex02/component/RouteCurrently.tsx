@@ -3,13 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useContext } from 'react';
 import { WeatherContext } from '../context/WeatherContext';
 
-export default function CurrentlyRoute() {
-    type WeatherData = {
-        temperature: number;
-        windspeed: number;
-        weathercode: number;
-    };
-
+export default function RouteCurrently() {
     const weatherContext = useContext(WeatherContext);
     if (!weatherContext) {
         throw new Error("WeatherContext not found");
@@ -23,11 +17,11 @@ export default function CurrentlyRoute() {
                     <Text style={styles.error}>{data.error}</Text>
                 ) : (
                     <View style={{ alignItems: 'center' }}>
-                        <Text style={styles.weatherInfo}>{data?.location?.city ?? ''}</Text>
-                        <Text style={styles.weatherInfo}>{data?.location?.region ?? ''}</Text>
-                        <Text style={styles.weatherInfo}>{data?.location?.country ?? ''}</Text>
-                        <Text style={styles.weatherInfo}>{data?.current?.temperature ?? ''} °C</Text>
-                        <Text style={styles.weatherInfo}>{data?.current?.wind ?? ''} km/h</Text>
+                        <Text style={styles.weatherInfoText}>{data?.location?.city ?? ''}</Text>
+                        <Text style={styles.weatherInfoText}>{data?.location?.region ?? ''}</Text>
+                        <Text style={styles.weatherInfoText}>{data?.location?.country ?? ''}</Text>
+                        <Text style={styles.weatherInfoText}>{data?.current?.temperature ?? ''} °C</Text>
+                        <Text style={styles.weatherInfoText}>{data?.current?.wind ?? ''} km/h</Text>
                     </View>
                 )}
             </View>
@@ -48,7 +42,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center'
     },
-    weatherInfo: {
+    weatherInfoText: {
         fontSize: 20,
         alignItems: 'center'
 

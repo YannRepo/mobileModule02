@@ -12,12 +12,6 @@ import { useEffect, useState } from 'react';
 
 // ajouter gestion 'Geolocation is not available, please enable it in your App settings'
 export default function TodayRoute({ location }: { location: locationData }) {
-type TodayWeatherData = {
-    temperature: number;
-    windspeed: number;
-    weathercode: number;
-};
-
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
 

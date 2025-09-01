@@ -9,9 +9,9 @@ import { fetchWeatherApi } from 'openmeteo';
 
 export interface WeatherData {
     location: { city: string; region: string; country: string };
-    current: { temperature: number; desc: string; wind: number };
-    //hourly: Array<{ time: Date; temp: number; desc: string; wind: number }>;
-    //daily: Array<{ date: Date; min: number; max: number; desc: string }>;
+    current: { temperature: number; description: string; wind: number };
+    hourly: Array<{ time: string; temperature: number; description: string; wind: number }>;
+    daily: Array<{ date: Date; min: number; max: number; desc: string }>;
     error: string | null;
 }
 
@@ -30,9 +30,9 @@ export const WeatherContext = createContext<{
 export const WeatherProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [data, setData] = useState<WeatherData>({
         location: { city: '', region: '', country: '' },
-        current: { temperature: 0, desc: '', wind: 0 },
-        // hourly: [],
-        // daily: [],
+        current: { temperature: 0, description: '', wind: 0 },
+        hourly: [],
+        daily: [],
         error: null,
     });
 
@@ -40,7 +40,7 @@ export const WeatherProvider: React.FC<{ children: ReactNode }> = ({ children })
         try {
             const APIGeocodeAnswer = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}`);
             const cityData = await APIGeocodeAnswer.json();
-            console.log('[WeatherContext] cityData:', cityData);
+            // console.log('[WeatherContext] cityData:', cityData);
             return {
                 city: cityData.city || cityData.locality || 'Unknown',
                 region: cityData.principalSubdivision || 'Unknown',
@@ -79,39 +79,41 @@ export const WeatherProvider: React.FC<{ children: ReactNode }> = ({ children })
             ]);
 
             const response = responses[0];
-            //const offset = response.utcOffsetSeconds();
+            const offset = response.utcOffsetSeconds(); // UTC offset in seconds between GMT and local time (ms)
 
             // Current
             const curr = response.current()!;
             const current = {
                 temperature: Math.round(curr.variables(0)!.value()),
-                desc: getMeteoDescription(curr.variables(1)!.value()),
+                description: getMeteoDescription(curr.variables(1)!.value()),
                 wind: Math.round(curr.variables(2)!.value())
             };
 
             // Hourly (24h)
-            // const h = response.hourly()!;
-            // const hourly = Array.from({ length: 24 }, (_, i) => ({
-            //   time: new Date((Number(h.time()) + i * h.interval() + offset) * 1000),
-            //   temperature: Math.round(h.variables(0)!.valuesArray()![i]),
-            //   desc: getDesc(h.variables(1)!.valuesArray()![i]),
-            //   wind: Math.round(h.variables(2)!.valuesArray()![i])
-            // }));
+            const h = response.hourly()!; // response contains all hours for more than 1 day, we take only the first 24 hours
+            // console.log('Hourly', h.variables(0)!.valuesArray()!);
+            const hourly = Array.from({ length: 24 }, (_, i) => ({
+              time: new Date((Number(h.time()) + i * h.interval()+ offset) * 1000).toISOString().slice(11, 16),  //h.time : from 00:00 to 23:00 of the concern city given in GMT (starts at 7am for San Francisco for example)
+              temperature: Math.round(h.variables(0)!.valuesArray()![i]),
+              description: getMeteoDescription(h.variables(1)!.valuesArray()![i]),
+              wind: Math.round(h.variables(2)!.valuesArray()![i])
+            }));
 
 
             // Daily
-            // const d = response.daily()!;
-            // const dailyCount = (Number(d.timeEnd()) - Number(d.time())) / d.interval();
-            // const daily = Array.from({ length: dailyCount }, (_, i) => ({
-            //   date: new Date((Number(d.time()) + i * d.interval() + offset) * 1000),
-            //   max: Math.round(d.variables(0)!.valuesArray()![i]),
-            //   min: Math.round(d.variables(1)!.valuesArray()![i]),
-            //   desc: getDesc(d.variables(2)!.valuesArray()![i])
-            // }));
+            const d = response.daily()!;
+            console.log('daily', d.variables(2)!.valuesArray()!);
+            const dailyCount = (Number(d.timeEnd()) - Number(d.time())) / d.interval();
+            const daily = Array.from({ length: dailyCount }, (_, i) => ({
+              date: new Date((Number(d.time()) + i * d.interval() + offset) * 1000),
+              max: Math.round(d.variables(0)!.valuesArray()![i]),
+              min: Math.round(d.variables(1)!.valuesArray()![i]),
+              desc: getMeteoDescription(d.variables(2)!.valuesArray()![i])
+            }));
 
-            // const newData = { location, current, hourly, daily, loading: false, error: null };
-            const newData = { location, current, error: null };
-            console.log('[WeatherContext] newData:', newData);
+            const newData = { location, current, hourly, daily, error: null };
+            // const newData = { location, current, hourly, error: null };
+            // console.log('[WeatherContext] newData:', newData);
 
             setData(newData);
 
