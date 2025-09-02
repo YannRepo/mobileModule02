@@ -1,6 +1,8 @@
 import { TextInput, View, StyleSheet, FlatList, TouchableOpacity, Text } from 'react-native';
 import { Searchbar } from 'react-native-paper';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useContext, useCallback } from 'react';
+import { WeatherContext } from '../context/WeatherContext';
+
 
 import { Icon } from 'react-native-elements';
 import debounce from "lodash.debounce";
@@ -11,6 +13,12 @@ import { locationData } from '../types';
 
 
 export default function MySearchBar() {
+
+  const weatherContext = useContext(WeatherContext);
+  if (!weatherContext) {
+    throw new Error("WeatherContext not found");
+  }
+  const { fetchWeather } = weatherContext;
 
   type CityResult = {
     id: number;
@@ -24,25 +32,22 @@ export default function MySearchBar() {
   const [results, setResults] = useState<CityResult[]>([]);
   const [searchText, setSearchText] = useState("");
 
+
   const fetchCity = async (cityName: string) => {
     try {
       const res = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=en&format=json`
       );
+      console.log("search city:", cityName);
+
       const data = await res.json();
       //console.log("fetchCity data:", data);
       //console.log("fetchCity data.results[0]:", data.results[0]);
       if (data.results && data.results.length > 0) {
-        const city = data.results[0];
-        //console.log("fetchCity city:", city.latitude);
-        const location = {
-          city: city.name,
-          region: city.admin1,
-          country: city.country,
-          latitude: city.latitude,
-          longitude: city.longitude,
-        };
-        return (location);
+        console.log("return:", data.results[0].name);
+        const location = data.results[0];
+        fetchWeather(location.latitude, location.longitude);
+
       }
     } catch (e) {
       //console.error(e);
@@ -72,12 +77,14 @@ export default function MySearchBar() {
   const handleSubmitEditing = async () => {
     console.log("Submitting");
     setResults([]);
-    const location = await fetchCity(searchText);
-    console.log("location", location);
+    await fetchCity(searchText);
 
-    if (location) {
-      // setLocation(location);
-    }
+  };
+
+  const handleListSelection = (item: CityResult) => {
+    setSearchText(item.name + ", " + item.admin1 + ", " + item.country);
+    fetchWeather(item.latitude, item.longitude);
+    setResults([]);
   };
 
   return (
@@ -105,19 +112,7 @@ export default function MySearchBar() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.item}
-              onPress={() => {
-                setSearchText(item.name);
-                //setPosition(item.name);
-                // setLocation({
-                //   city: item.name,
-                //   region: item.admin1,
-                //   country: item.country,
-                //   latitude: item.latitude,
-                //   longitude: item.longitude,
-                // });
-                setResults([]);
-
-              }}
+              onPress={() => { handleListSelection(item) }}
             >
               <Text>{item.name}, {item.admin1}, {item.country}</Text>
             </TouchableOpacity>

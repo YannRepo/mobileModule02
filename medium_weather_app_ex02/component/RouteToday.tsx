@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useContext } from 'react';
 import { WeatherContext } from '../context/WeatherContext';
-import { styles } from './styles/styles';
+import { styles } from '../styles/styles';
 
 export default function RouteToday() {
 

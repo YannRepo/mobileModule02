@@ -9,7 +9,7 @@ import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { locationData } from '../types';
 import RouteCurrently from './RouteCurrently';
 import RouteToday from './RouteToday';
-import TodayRoute from './TodayTab';
+import RouteWeekly from './RouteWeekly';
 
 import { WeatherContext } from '../context/WeatherContext';
 
@@ -66,7 +66,7 @@ export default function MyTabView() {
                         case 'today':
                             return <RouteToday />;
                         case 'weekly':
-                            // return <WeeklyRoute />;
+                            return <RouteWeekly />;
                             return <Text>a faire</Text>;
                         default:
                             return null;
