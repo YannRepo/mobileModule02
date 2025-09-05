@@ -23,10 +23,9 @@ export default function LocationButton() {
         throw new Error("WeatherContext not found");
     }
 
-    const { data, setData, fetchWeather } = weatherContext;
+    const { data, setData, fetchLocationAndWeather } = weatherContext;
 
     const handleGeolocation = async () => {
-        console.log("[LocationButton] Getting GPS position...");
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
             console.log("[LocationButton] Error: 'Permission to access location is denied.");
@@ -36,14 +35,9 @@ export default function LocationButton() {
             }));
             return;
         }
-        console.log("[LocationButton] location access granted");
         let loc = await Location.getCurrentPositionAsync({});
-        fetchWeather(loc.coords.latitude, loc.coords.longitude);
-
-
-
+        fetchLocationAndWeather(loc.coords.latitude, loc.coords.longitude);
     };
-
 
 
     return (

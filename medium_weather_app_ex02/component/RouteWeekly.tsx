@@ -16,7 +16,7 @@ export default function RouteWeekly() {
         <View style={styles.tabBackground}>
             <View>
                 {data?.error ? (
-                    <Text style={styles.error}>{data.error}</Text>
+                    <Text style={styles.errorText}>{data.error}</Text>
                 ) : (
                     <View >
                         <Text style={styles.weeklyLocationInfoText}>{data?.location?.city ?? ''}</Text>

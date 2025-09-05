@@ -18,7 +18,7 @@ export default function MySearchBar() {
   if (!weatherContext) {
     throw new Error("WeatherContext not found");
   }
-  const { fetchWeather } = weatherContext;
+  const { fetchWeather, setError } = weatherContext;
 
   type CityResult = {
     id: number;
@@ -34,56 +34,68 @@ export default function MySearchBar() {
 
 
   const fetchCity = async (cityName: string) => {
+    console.log("[MySearchBar] fetchCity:", cityName);
     try {
       const res = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=en&format=json`
       );
-      console.log("search city:", cityName);
-
       const data = await res.json();
-      //console.log("fetchCity data:", data);
-      //console.log("fetchCity data.results[0]:", data.results[0]);
       if (data.results && data.results.length > 0) {
-        console.log("return:", data.results[0].name);
         const location = data.results[0];
-        fetchWeather(location.latitude, location.longitude);
+        fetchWeather(location.latitude, location.longitude, location.name, location.admin1, location.country);
 
       }
-    } catch (e) {
-      //console.error(e);
+      else {
+        setError("City not found")
+      }
+    } catch (e: any) {
+      setError(e.message);
       return null;
     }
   };
 
   const fetchCities = async (text: string) => {
+    console.log("[MySearchBar] fetchCities:", text);
     try {
       const res = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(text)}&count=5&language=en&format=json`
       );
       const data = await res.json();
-      setResults(data.results || []);
+      if (data.results && data.results.length > 0) {
+        setResults(data.results || []);
+      }
+      else {
+        setResults([]);
+      }
+
     } catch (e) {
-      console.error(e);
+      setResults([]);
+      console.log("Error fetching cities list:", e);
     }
   };
 
   const debouncedFetch = useCallback(debounce(fetchCities, 400), []);
 
   const handleChange = (text: string) => {
+    console.log("[MySearchBar] handleChange:", text);
     setSearchText(text);
     debouncedFetch(text);
   };
 
   const handleSubmitEditing = async () => {
-    console.log("Submitting");
+    console.log("[MySearchBar] handleSubmitEditing:", searchText);
+    setSearchText("");
     setResults([]);
+    debouncedFetch.cancel();
     await fetchCity(searchText);
 
   };
 
   const handleListSelection = (item: CityResult) => {
-    setSearchText(item.name + ", " + item.admin1 + ", " + item.country);
-    fetchWeather(item.latitude, item.longitude);
+    console.log("[MySearchBar] handleListSelection:", item);
+    setSearchText("");
+    // setSearchText(item.name + ", " + item.admin1 + ", " + item.country);
+    fetchWeather(item.latitude, item.longitude, item.name, item.admin1, item.country);
     setResults([]);
   };
 

@@ -16,7 +16,7 @@ export default function RouteToday() {
         <View style={styles.tabBackground}>
             <View>
                 {data?.error ? (
-                    <Text style={styles.error}>{data.error}</Text>
+                    <Text style={styles.errorText}>{data.error}</Text>
                 ) : (
                     <View >
                         <Text style={styles.locationInfoText}>{data?.location?.city ?? ''}</Text>
@@ -30,7 +30,7 @@ export default function RouteToday() {
                                 <View style={styles.row}>
                                     <Text style={styles.weatherInfoText}>{item.time}</Text>
                                     <Text style={styles.weatherInfoText}>{item.temperature}°C</Text>
-                                    {/* <Text style={styles.weatherInfoText}>{item.description}</Text> */}
+                                    <Text style={styles.weatherInfoText}>{item.description}</Text>
                                     <Text style={styles.weatherInfoText}>{item.wind} km/h</Text>
                                 </View>
                                 // <View style={{ marginVertical: 4 }}>
